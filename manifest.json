@@ -1,0 +1,37 @@
+{
+  "name": "Quick Review",
+  "description": "See Google reviews of restaurants without opening another tab",
+  "version": "1.0",
+  "manifest_version": 3,
+  "action": {
+    "default_popup": "config/index.html"
+  },
+  "content_scripts": [
+    {
+      "css": [
+        "quick-review.css"
+      ],
+      "js": [
+        "dependencies/popper.min.js",
+        "dependencies/textHighlighter.js",
+        "dependencies/tippy.min.js",
+        "quickReview.js"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "options_ui": {
+    "page": "config/index.html",
+    "open_in_tab": false
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["/icons/map-link.svg"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
