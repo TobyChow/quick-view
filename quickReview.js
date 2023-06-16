@@ -1,9 +1,3 @@
-//todo rm - for testing purposes
-const delay = async (delay = 1000, callback = () => {}) => {
-    const delayPromise = ms => new Promise(res => setTimeout(res, ms));
-    await delayPromise(delay);
-    callback();
-};
 let EXTENSION_CONFIG = {}; // defined on initialization
 
 function createRatingTooltip(selectedText, searchQuery, { rating, user_ratings_total, editorial_summary, url, price_level }) {
@@ -42,7 +36,7 @@ function createErrorTooltip(name) {
     `;
 }
 
-async function fetchRating(query) {
+async function fetchPlaceDetails(query) {
     const url = `https://quickview.tobychow.repl.co/api/`;//todo
     const response = await fetch(url, {
         method: 'POST',
@@ -75,9 +69,7 @@ async function getStorage() {
     const storage = await getStorage();
     EXTENSION_CONFIG = storage.options;
 
-    const hltr = new TextHighlighter(document.body, {
-        color: EXTENSION_CONFIG?.options?.color,
-    });
+    const hltr = new TextHighlighter(document.body);
 
     tippy.delegate('body', {
         content: 'Loading',
@@ -94,15 +86,14 @@ async function getStorage() {
 
             instance._isFetching = true;
 
-            // build search query
+            // add text to append from extension config to highlighted text
             const selectedText = hltr.getHighlights()[0].innerText.trim();
             const appendSearchText = EXTENSION_CONFIG.appendSearchText ?? '';
             const searchQuery = `${selectedText} ${appendSearchText}`;
-            console.log(searchQuery); // todo remove
 
             try {
                 // get ratings
-                const placeDetails = await fetchRating(searchQuery);
+                const placeDetails = await fetchPlaceDetails(searchQuery);
                 instance.setContent(createRatingTooltip(selectedText, searchQuery, placeDetails));
             } catch(err) {
                 console.log(err); // todo remove
@@ -131,15 +122,8 @@ async function getStorage() {
         });
 
         chrome.storage.onChanged.addListener(changes => {
-            console.log(changes); // todo remove
-            console.log(EXTENSION_CONFIG); // todo remove
             const newValues = changes?.options?.newValue;
             EXTENSION_CONFIG = newValues;
-
-            const newHighlightColor = newValues?.color;
-            if (newHighlightColor) {
-                hltr.setColor(newHighlightColor);
-            }
         });
     })();
 })();
