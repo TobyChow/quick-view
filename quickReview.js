@@ -1,3 +1,6 @@
+const HIGHLIGHT_CLASS = 'ext-highlighted';
+let isExtensionEnabled;
+
 function createRatingTooltip(selectedText, searchQuery, { rating, user_ratings_total, editorial_summary, url, price_level }) {
     const externalLinkImg = chrome.runtime.getURL('icons/map-link.svg');
     const priceLevelDisplay = '$'.repeat(price_level);
@@ -65,25 +68,29 @@ async function getOptions() {
     return options;
 };
 
-let hltr;
-let tooltips;
-
 async function init() { //todo disable
     const extensionOptions = await getOptions();
+    isExtensionEnabled = extensionOptions.isEnabled;
     console.log(extensionOptions); // todo remove
-    if (!extensionOptions.isEnabled) {
+    if (!isExtensionEnabled) {
         return;
     }
 
-    hltr = new TextHighlighter(document.body);
+    rangy.init();
+    const hltr = rangy.createHighlighter();
+    const applier = rangy.createClassApplier(HIGHLIGHT_CLASS, {
+        elementAttributes: {
+            'aria-expanded':'false',
+        }
+    });
+    hltr.addClassApplier(applier);
 
-    tooltips = tippy.delegate('body', {
+    tippy.delegate('body', {
         content: 'Loading',
         delay: 500, // ms
         interactive: true,
-        target: '.highlighted',
+        target: `.${HIGHLIGHT_CLASS}`,
         allowHTML: true,
-        inlinePositioning: true,
         appendTo: document.body, // prevent tooltip from cutting off by parent container
         async onShow(instance) {
             if (instance._isFetching || instance._src || instance._error) {
@@ -95,7 +102,7 @@ async function init() { //todo disable
             const extensionOptions = await getOptions();
 
             // add text to append from extension config to highlighted text
-            const selectedText = hltr.getHighlights()[0].innerText.trim();
+            const selectedText = document.querySelector(`.${HIGHLIGHT_CLASS}`).innerText.trim();
             const appendSearchText = extensionOptions.appendSearchText ?? '';
             const searchQuery = `${selectedText} ${appendSearchText}`;
 
@@ -124,26 +131,25 @@ async function init() { //todo disable
         },
     });
 
+    document.addEventListener('mouseup', async e => {
+        isExtensionEnabled && hltr.highlightSelection(HIGHLIGHT_CLASS);
+    });
     document.addEventListener('mousedown', e => {
-        hltr && hltr.removeHighlights();
+        // setTimeout to prevent highlighting entire element when left clicking on selection
+        setTimeout(() => {
+            if (e.which !== 3) { // allow context menu to work by not removing selection on right click
+                hltr.removeAllHighlights();
+            }
+        },0);
+    });
+    chrome.storage.onChanged.addListener(async(changes) => {
+        const newValues = changes?.options?.newValue;
+        isExtensionEnabled = newValues.isEnabled;
     });
 }
-init();
 
-chrome.storage.onChanged.addListener(async(changes) => {
-    const newValues = changes?.options?.newValue;
-    console.log(newValues); // todo remove
-    if (newValues.isEnabled) {
-        await init();
-    } else {
-        cleanUp();
-    }
-});
+window.onload = () => init();
 
-function cleanUp() {
-    hltr.destroy();
-    tooltips.forEach(tooltip => tooltip.destroy());
-}
 
 
 

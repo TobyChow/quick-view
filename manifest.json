@@ -13,8 +13,10 @@
       ],
       "js": [
         "dependencies/popper.min.js",
-        "dependencies/textHighlighter.js",
         "dependencies/tippy.min.js",
+        "dependencies/rangy-core.js",
+        "dependencies/rangy-classapplier.js",
+        "dependencies/rangy-highlighter.js",
         "quickReview.js"
       ],
       "matches": ["<all_urls>"]

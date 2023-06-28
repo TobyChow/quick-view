@@ -17,9 +17,6 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
-span.highlighted {
-    color: black!important;
-}
 .query-link {
     color:white;
 }
