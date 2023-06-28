@@ -15,7 +15,7 @@ function createRatingTooltip(selectedText, searchQuery, { rating, user_ratings_t
                     ${selectedText}
                 </a>
                 ${priceLevelDisplay}
-                ${url && `<a href="${url}" target="_blank" rel="noopener noreferrer">
+                ${url && `<a href="${url}" target="_blank" rel="noopener noreferrer" style="display:inline-block;">
                             <img style="color:white; width:25px; height:25px" src="${externalLinkImg}" alt="external-link-image"/>
                         </a>`}
             </div>
@@ -38,7 +38,6 @@ function createErrorTooltip(name) {
 }
 
 async function fetchPlaceDetails(query) {
-    throw new Error('a');
     const url = `https://quickview.tobychow.repl.co/api/`;//todo
     const response = await fetch(url, {
         method: 'POST',
@@ -68,26 +67,18 @@ async function getOptions() {
     return options;
 };
 
-async function init() { //todo disable
-    const extensionOptions = await getOptions();
-    isExtensionEnabled = extensionOptions.isEnabled;
-    console.log(extensionOptions); // todo remove
-    if (!isExtensionEnabled) {
-        return;
-    }
-
+async function init() {
     rangy.init();
     const hltr = rangy.createHighlighter();
     const applier = rangy.createClassApplier(HIGHLIGHT_CLASS, {
         elementAttributes: {
-            'aria-expanded':'false',
+            'aria-expanded':'false', // need to add attribute applied by tippy, or removeAllHighlights() will not clear highlights properly
         }
     });
     hltr.addClassApplier(applier);
 
     tippy.delegate('body', {
         content: 'Loading',
-        delay: 500, // ms
         interactive: true,
         target: `.${HIGHLIGHT_CLASS}`,
         allowHTML: true,
@@ -132,12 +123,16 @@ async function init() { //todo disable
     });
 
     document.addEventListener('mouseup', async e => {
-        isExtensionEnabled && hltr.highlightSelection(HIGHLIGHT_CLASS);
+        const tagElement = e.target.tagName;
+        const disabledElements = ['INPUT', 'TEXTAREA']; // disable highlighting for these elements
+        if (!disabledElements.includes(tagElement) && isExtensionEnabled) {
+            hltr.highlightSelection(HIGHLIGHT_CLASS);
+        }
     });
     document.addEventListener('mousedown', e => {
         // setTimeout to prevent highlighting entire element when left clicking on selection
         setTimeout(() => {
-            if (e.which !== 3) { // allow context menu to work by not removing selection on right click
+            if (e.button !== 2) { // allow context menu to work by not removing selection on right click
                 hltr.removeAllHighlights();
             }
         },0);
