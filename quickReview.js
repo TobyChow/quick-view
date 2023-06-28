@@ -1,5 +1,3 @@
-let EXTENSION_CONFIG = {}; // defined on initialization
-
 function createRatingTooltip(selectedText, searchQuery, { rating, user_ratings_total, editorial_summary, url, price_level }) {
     const externalLinkImg = chrome.runtime.getURL('icons/map-link.svg');
     const priceLevelDisplay = '$'.repeat(price_level);
@@ -37,6 +35,7 @@ function createErrorTooltip(name) {
 }
 
 async function fetchPlaceDetails(query) {
+    throw new Error('a');
     const url = `https://quickview.tobychow.repl.co/api/`;//todo
     const response = await fetch(url, {
         method: 'POST',
@@ -61,17 +60,24 @@ async function fetchPlaceDetails(query) {
     return result;
 }
 
-async function getStorage() {
-    return await chrome.storage.sync.get(["options"]);
+async function getOptions() {
+    const { options } = await chrome.storage.sync.get(["options"]);
+    return options;
 };
 
-(async function init() {
-    const storage = await getStorage();
-    EXTENSION_CONFIG = storage.options;
+let hltr;
+let tooltips;
 
-    const hltr = new TextHighlighter(document.body);
+async function init() { //todo disable
+    const extensionOptions = await getOptions();
+    console.log(extensionOptions); // todo remove
+    if (!extensionOptions.isEnabled) {
+        return;
+    }
 
-    tippy.delegate('body', {
+    hltr = new TextHighlighter(document.body);
+
+    tooltips = tippy.delegate('body', {
         content: 'Loading',
         delay: 500, // ms
         interactive: true,
@@ -86,9 +92,11 @@ async function getStorage() {
 
             instance._isFetching = true;
 
+            const extensionOptions = await getOptions();
+
             // add text to append from extension config to highlighted text
             const selectedText = hltr.getHighlights()[0].innerText.trim();
-            const appendSearchText = EXTENSION_CONFIG.appendSearchText ?? '';
+            const appendSearchText = extensionOptions.appendSearchText ?? '';
             const searchQuery = `${selectedText} ${appendSearchText}`;
 
             try {
@@ -96,7 +104,7 @@ async function getStorage() {
                 const placeDetails = await fetchPlaceDetails(searchQuery);
                 instance.setContent(createRatingTooltip(selectedText, searchQuery, placeDetails));
             } catch(err) {
-                console.log(err); // todo remove
+                console.log(err);
                 instance.setContent(createErrorTooltip(selectedText));
             } finally {
                 instance._isFetching = false;
@@ -116,16 +124,26 @@ async function getStorage() {
         },
     });
 
-    (function initEvents() {
-        document.addEventListener('mousedown', e => {
-            hltr.removeHighlights();
-        });
+    document.addEventListener('mousedown', e => {
+        hltr && hltr.removeHighlights();
+    });
+}
+init();
 
-        chrome.storage.onChanged.addListener(changes => {
-            const newValues = changes?.options?.newValue;
-            EXTENSION_CONFIG = newValues;
-        });
-    })();
-})();
+chrome.storage.onChanged.addListener(async(changes) => {
+    const newValues = changes?.options?.newValue;
+    console.log(newValues); // todo remove
+    if (newValues.isEnabled) {
+        await init();
+    } else {
+        cleanUp();
+    }
+});
+
+function cleanUp() {
+    hltr.destroy();
+    tooltips.forEach(tooltip => tooltip.destroy());
+}
+
 
 

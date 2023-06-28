@@ -1,16 +1,30 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>My Test Extension Options</title>
+    <title>QuickView Config</title>
+    <link href="./index.css" rel="stylesheet">
 </head>
 <body>
-    <form id="optionsForm">
-        <div>
-            <label for="append-search">Append Text to Query
-                <input id="append-search" type="text" value=""/>
-            </label>
+    <form id="extension-options-form">
+        <div class="option-row">
+            <div class="option-row__value">
+                <label class="switch" for="extension-status">
+                    <input id="extension-status" type="checkbox">
+                    <span class="slider slider-init round"></span>
+                </label>
+            </div>
+        </div>
+        <div class="option-row">
+            <div class="option-row__name">
+                Append Text to Query
+            </div>
+            <div class="option-row__value">
+                <label for="append-search">
+                    <input id="append-search" type="text" value="" autocomplete="off"/>
+                </label>
+            </div>
         </div>
     </form>
-<script src="index.js"></script>
+    <script src="index.js"></script>
 </body>
 </html>
