@@ -62,12 +62,15 @@ async function fetchPlaceDetails(query) {
     return result;
 }
 
-async function getOptions() {
+async function getExtensionOptions() {
     const { options } = await chrome.storage.sync.get(["options"]);
     return options;
 };
 
 async function init() {
+    const extensionOptions = await getExtensionOptions();
+    isExtensionEnabled = extensionOptions.isEnabled;
+
     rangy.init();
     const hltr = rangy.createHighlighter();
     const applier = rangy.createClassApplier(HIGHLIGHT_CLASS, {
@@ -90,7 +93,7 @@ async function init() {
 
             instance._isFetching = true;
 
-            const extensionOptions = await getOptions();
+            const extensionOptions = await getExtensionOptions();
 
             // add text to append from extension config to highlighted text
             const selectedText = document.querySelector(`.${HIGHLIGHT_CLASS}`).innerText.trim();
