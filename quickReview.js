@@ -38,7 +38,7 @@ function createErrorTooltip(name) {
 }
 
 async function fetchPlaceDetails(query) {
-    const url = `https://quickview.tobychow.repl.co/api/`;//todo
+    const url = `https://gmap-service.vercel.app/api`;
     const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -82,6 +82,7 @@ async function init() {
 
     tippy.delegate('body', {
         content: 'Loading',
+        delay: 250, //ms
         interactive: true,
         target: `.${HIGHLIGHT_CLASS}`,
         allowHTML: true,
@@ -101,7 +102,7 @@ async function init() {
             const searchQuery = `${selectedText} ${appendSearchText}`;
 
             try {
-                // get ratings
+                // get place details
                 const placeDetails = await fetchPlaceDetails(searchQuery);
                 instance.setContent(createRatingTooltip(selectedText, searchQuery, placeDetails));
             } catch(err) {
@@ -113,12 +114,12 @@ async function init() {
         },
         onHidden(instance) {
             instance.setContent('Loading');
-            // Unset these properties so new network requests can be initiated
+            // unset these properties so new network requests can be initiated
             instance._src = null;
             instance._error = null;
         },
         onCreate(instance) {
-            // Setup our own custom state properties
+            // setup our own custom state properties
             instance._isFetching = false;
             instance._src = null;
             instance._error = null;
@@ -128,7 +129,8 @@ async function init() {
     document.addEventListener('mouseup', async e => {
         const tagElement = e.target.tagName;
         const disabledElements = ['INPUT', 'TEXTAREA']; // disable highlighting for these elements
-        if (!disabledElements.includes(tagElement) && isExtensionEnabled) {
+        const hasSelection = window.getSelection().toString();
+        if (!disabledElements.includes(tagElement) && isExtensionEnabled && hasSelection) {
             hltr.highlightSelection(HIGHLIGHT_CLASS);
         }
     });
